@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat Application</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="chat-container">
+      <div id="active-users">
+        <h3>Active Users</h3>
+        <ul id="users-list"></ul>
+      </div>
+      <div id="message-container"></div>
+      <form id="message-form">
+        <input
+          type="text"
+          id="message-input"
+          placeholder="Type a message..."
+          required />
+        <button type="submit" id="send-button">Send</button>
+      </form>
+    </div>
+
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+      const socket = io();
+
+      const messageContainer = document.getElementById("message-container");
+      const messageForm = document.getElementById("message-form");
+      const messageInput = document.getElementById("message-input");
+      const usersList = document.getElementById("users-list");
+
+      const username = prompt("Enter your username:");
+      const room = prompt("Enter room name:");
+
+      socket.emit("joinRoom", { username, room });
+
+      socket.on("message", ({ username, message }) => {
+        const messageElement = document.createElement("p");
+        messageElement.textContent = `${username}: ${message}`;
+        messageContainer.appendChild(messageElement);
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+      });
+
+      socket.on("activeUsers", (users) => {
+        usersList.innerHTML = "";
+        users.forEach((user) => {
+          const userElement = document.createElement("li");
+          userElement.textContent = user.username;
+          usersList.appendChild(userElement);
+        });
+      });
+
+      messageForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const message = messageInput.value;
+        socket.emit("sendMessage", { room, message, username });
+        messageInput.value = "";
+      });
+    </script>
+  </body>
+</html>
